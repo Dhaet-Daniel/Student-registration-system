@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run PHP Server",
+      "type": "shell",
+      "command": "C:\\xampp\\php\\php.exe",
+      "args": [
+        "-S",
+        "127.0.0.1:8085",
+        "-t",
+        "${workspaceFolder}"
+      ],
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "php-server",
+        "pattern": {
+          "regexp": "."
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Development Server",
+          "endsPattern": "Development Server"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}
