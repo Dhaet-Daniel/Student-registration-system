@@ -23,6 +23,19 @@ document.addEventListener('DOMContentLoaded', function () {
     editingId: null
   };
 
+  function syncThemeButton() {
+    const isDark = document.body.classList.contains('dark');
+    themeToggle.setAttribute('aria-pressed', String(isDark));
+    themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+
+  try {
+    document.body.classList.toggle('dark', localStorage.getItem('campusDeskTheme') === 'dark');
+  } catch (error) {
+    // Keep the page usable if browser storage is restricted.
+  }
+  syncThemeButton();
+
   function showToast(message, type) {
     toast.textContent = message;
     toast.className = 'toast show ' + type;
@@ -127,6 +140,9 @@ document.addEventListener('DOMContentLoaded', function () {
     tableBody.innerHTML = state.filteredStudents.map(function (student) {
       return '<tr><td><div class="student-cell"><strong>' + escapeHtml(student.full_name) + '</strong><span>' + escapeHtml(student.email) + '</span></div></td><td><span class="chip">' + escapeHtml(student.student_id) + '</span></td><td>' + escapeHtml(student.program) + '</td><td>' + escapeHtml(formatDate(student.registration_date)) + '</td><td><div class="table-actions"><button class="table-btn edit-btn" type="button" data-id="' + escapeHtml(String(student.id)) + '">Edit</button><button class="table-btn delete-btn" type="button" data-id="' + escapeHtml(String(student.id)) + '">Delete</button></div></td></tr>';
     }).join('');
+    tableBody.querySelectorAll('tr').forEach(function (row, index) {
+      row.style.animationDelay = Math.min(index * 25, 200) + 'ms';
+    });
   }
 
   function applyFilter() {
@@ -157,12 +173,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function loadStudents() {
     tableBody.innerHTML = '<tr><td colspan="5" class="table-empty">Loading student records...</td></tr>';
+    refreshBtn.disabled = true;
     try {
       const payload = await requestData(form.action, { method: 'GET', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       hydrateDashboard(payload);
     } catch (error) {
       tableBody.innerHTML = '<tr><td colspan="5" class="table-empty">Unable to load records.</td></tr>';
       showToast(error.message || 'Unable to load records.', 'error');
+    } finally {
+      refreshBtn.disabled = false;
     }
   }
 
@@ -246,8 +265,13 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   themeToggle.addEventListener('click', function () {
-    document.body.classList.toggle('dark');
-    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    const isDark = document.body.classList.toggle('dark');
+    try {
+      localStorage.setItem('campusDeskTheme', isDark ? 'dark' : 'light');
+    } catch (error) {
+      // Keep the current page usable even if the preference cannot be saved.
+    }
+    syncThemeButton();
   });
 
   resetForm();

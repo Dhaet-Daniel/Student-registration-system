@@ -4,6 +4,20 @@ document.addEventListener('DOMContentLoaded', function () {
   const toast = document.getElementById('toast');
   const themeToggle = document.getElementById('themeToggle');
   const apiBase = window.location.port === '5500' ? 'http://127.0.0.1:8085/' : '';
+  const buttonLabel = submitBtn.querySelector('.button-label');
+
+  function syncThemeButton() {
+    const isDark = document.body.classList.contains('dark');
+    themeToggle.setAttribute('aria-pressed', String(isDark));
+    themeToggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+
+  try {
+    document.body.classList.toggle('dark', localStorage.getItem('campusDeskTheme') === 'dark');
+  } catch (error) {
+    // Keep the page usable if browser storage is restricted.
+  }
+  syncThemeButton();
 
   function showToast(message, type) {
     toast.textContent = message;
@@ -75,7 +89,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Registering...';
+    submitBtn.classList.add('is-loading');
+    buttonLabel.textContent = 'Registering...';
 
     try {
       const payload = await requestData(form.action, {
@@ -99,7 +114,8 @@ document.addEventListener('DOMContentLoaded', function () {
       showToast(error.message || 'Unable to register student.', 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Register Student';
+      submitBtn.classList.remove('is-loading');
+      buttonLabel.textContent = 'Register student';
     }
   });
 
@@ -114,7 +130,12 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   themeToggle.addEventListener('click', function () {
-    document.body.classList.toggle('dark');
-    themeToggle.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    const isDark = document.body.classList.toggle('dark');
+    try {
+      localStorage.setItem('campusDeskTheme', isDark ? 'dark' : 'light');
+    } catch (error) {
+      // Keep the current page usable even if the preference cannot be saved.
+    }
+    syncThemeButton();
   });
 });
